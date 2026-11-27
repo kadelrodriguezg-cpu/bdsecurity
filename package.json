@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
-    "supabase": "^2.109.0",
+    "supabase": "^2.122.1",
     "typescript": "^5.5.0",
     "vitest": "^4.1.9"
   },
