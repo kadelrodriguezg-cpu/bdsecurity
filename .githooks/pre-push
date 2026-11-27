@@ -1,0 +1,100 @@
+#!/bin/sh
+# Verificación antes de cada push (el CI del proyecto; corre en el PC, sin minutos de GitHub).
+# Se activa con «npm install» en la raíz (script «prepare») o con:
+#   git config core.hooksPath .githooks
+#
+# Pasos, en orden; el primero que falla corta el push:
+#   1. Tipos de la raíz          (tsc --noEmit)                       ~2 s
+#   2. Tipos del frontend        (pnpm typecheck)                     ~10 s
+#   3. Pruebas del frontend      (pnpm test)                          ~50 s
+#   4. Pruebas RLS               (vitest en la raíz, Supabase local)  ~10 min
+#
+# El paso 4 es largo, así que corre solo si lo que se sube toca algo que esas
+# pruebas ejercitan (base, pruebas, scripts, SQL de docs, la API del frontend).
+#   TALCA_CON_RLS=1 git push   → correrlas siempre
+#   TALCA_SIN_RLS=1 git push   → no correrlas
+# Si Supabase local no está levantado, el paso 4 se salta con aviso (no bloquea).
+#
+# Saltar todo el gancho en una emergencia: git push --no-verify
+
+ceros=0000000000000000000000000000000000000000
+
+raiz=$(git rev-parse --show-toplevel) || exit 1
+cd "$raiz" || exit 1
+
+# Archivos que cambian en lo que se sube (stdin: <ref local> <sha local> <ref remota> <sha remota>).
+hay_algo_que_subir=0
+cambiados=""
+rango_desconocido=0
+while read -r _ref_local sha_local _ref_remota sha_remota; do
+  [ "$sha_local" = "$ceros" ] && continue  # borrar una rama o etiqueta remota
+  hay_algo_que_subir=1
+  if [ "$sha_remota" = "$ceros" ]; then
+    base=$(git merge-base "$sha_local" origin/main 2>/dev/null) || base=""
+  else
+    base=$sha_remota
+  fi
+  if [ -n "$base" ] && lista=$(git diff --name-only "$base" "$sha_local" 2>/dev/null); then
+    cambiados="$cambiados
+$lista"
+  else
+    rango_desconocido=1
+  fi
+done
+if [ "$hay_algo_que_subir" = 0 ]; then
+  exit 0
+fi
+
+for herramienta in node npx pnpm; do
+  if ! command -v "$herramienta" >/dev/null 2>&1; then
+    echo "[pre-push] No encuentro «$herramienta» en el PATH de este push." >&2
+    echo "[pre-push] Haz el push desde una terminal con Node (fnm) activo, o usa git push --no-verify." >&2
+    exit 1
+  fi
+done
+
+if [ -n "$(git status --porcelain)" ]; then
+  echo "[pre-push] Aviso: hay cambios sin commit; las pruebas corren sobre la carpeta, no solo sobre lo que se sube."
+fi
+
+paso() {
+  nombre=$1; shift
+  inicio=$(date +%s)
+  echo "[pre-push] $nombre..."
+  if "$@"; then
+    echo "[pre-push] $nombre: OK ($(( $(date +%s) - inicio )) s)"
+  else
+    echo "[pre-push] $nombre: FALLÓ. Push cancelado." >&2
+    exit 1
+  fi
+}
+
+paso "Tipos de la raíz" npx --no-install tsc --noEmit
+paso "Tipos del frontend" pnpm --dir frontend -s typecheck
+paso "Pruebas del frontend" pnpm --dir frontend -s test
+
+# ¿Lo que se sube toca algo que ejercitan las pruebas RLS?
+toca_rls=$(printf '%s\n' "$cambiados" | grep -E \
+  '^(supabase/|tests/|scripts/|src/types/|docs/migraciones_pendientes/|docs/[^/]+/rollback/|frontend/src/api/|frontend/api/|vitest\.config\.ts$|package\.json$)' \
+  | head -1)
+
+rls_corrida=0
+if [ "${TALCA_SIN_RLS:-0}" = 1 ]; then
+  echo "[pre-push] Pruebas RLS: saltadas a propósito (TALCA_SIN_RLS=1)."
+elif [ "${TALCA_CON_RLS:-0}" != 1 ] && [ "$rango_desconocido" = 0 ] && [ -z "$toca_rls" ]; then
+  echo "[pre-push] Pruebas RLS: no hacen falta (el push no toca base, pruebas, scripts ni la API). Forzarlas: TALCA_CON_RLS=1 git push"
+elif ! npx --no-install supabase status -o env >/dev/null 2>&1; then
+  echo "[pre-push] Pruebas RLS: SALTADAS, Supabase local no está levantado (npm run db:start)."
+  echo "[pre-push] El push sigue, pero sin verificar la seguridad de la base."
+else
+  [ -n "$toca_rls" ] && echo "[pre-push] El push toca, por ejemplo, $toca_rls: corren las pruebas RLS (~10 min)."
+  paso "Pruebas RLS" npx --no-install vitest run
+  rls_corrida=1
+fi
+
+if [ "$rls_corrida" = 1 ]; then
+  echo "[pre-push] Todo verde."
+else
+  echo "[pre-push] Verde, sin las pruebas RLS."
+fi
+exit 0

@@ -1,0 +1,13 @@
+# Vercel inyecta las variables de cada entorno; nunca subir archivos .env
+# locales, incluso si hoy contienen solo valores públicos.
+.env
+.env.*
+
+# Artefactos y dependencias locales: Vercel instala y compila desde fuente.
+dist
+node_modules
+.vercel
+
+# Tests de funciones serverless: todo archivo en api/ se publica como
+# funcion; sin esta regla api/geocoding.test.ts quedaba desplegado.
+api/**/*.test.ts

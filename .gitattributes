@@ -1,0 +1,7 @@
+# Todo el texto del repositorio es LF también en el árbol de trabajo (core.autocrlf=true de Git for Windows lo reescribía a CRLF y
+# dejaba como «modificado» cualquier archivo escrito en LF por un script o una herramienta, sin diferencia real de contenido).
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.sh text eol=lf
+scripts/respaldo/esperadas/* text eol=lf
+scripts/respaldo/*.sql text eol=lf

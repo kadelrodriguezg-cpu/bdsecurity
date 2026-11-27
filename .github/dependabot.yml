@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Dependencias del backend/raíz
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    ignore:
+      # Actualizaciones de versión mayor solo después de revisión manual
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Dependencias del frontend (pnpm)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "frontend"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]

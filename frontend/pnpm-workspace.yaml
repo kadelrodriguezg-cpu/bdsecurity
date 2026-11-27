@@ -1,0 +1,4 @@
+# Config de pnpm: dependencias autorizadas a correr scripts de build.
+# esbuild necesita su postinstall para instalar el binario nativo.
+allowBuilds:
+  esbuild: true

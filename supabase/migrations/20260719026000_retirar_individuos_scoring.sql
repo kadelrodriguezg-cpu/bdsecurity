@@ -1,0 +1,21 @@
+-- =============================================================================
+-- Sprint 9 (1.e) — retiro de la vista legacy individuos_scoring.
+--
+-- Ya estaba DEPRECADA desde 20260719004000_scoring_versionado_y_ranking.sql
+-- (SELECT revocado a authenticated, comentario "usar
+-- obtener_ranking_operativo()"), pero nunca se hizo el DROP porque 1.e
+-- depende de que el ranking nuevo lleve varios sprints en producción sin
+-- regresión — condición ya cumplida (Sprints 5-8 corrieron sobre
+-- obtener_ranking_operativo sin volver a esta vista).
+--
+-- Confirmado antes de dropear (evidencia, no supuesto):
+--   - grep completo de frontend/src y src: cero referencias fuera de las
+--     entradas auto-generadas de database.types.ts (metadata de FK, no
+--     código que la consuma).
+--   - pg_depend: ningún otro view/función depende de individuos_scoring.
+--   - Los 3 únicos lugares que la mencionan en supabase/migrations son su
+--     creación, su recreación (Sprint 3) y su deprecación (Sprint 5) — no
+--     hay un cuarto consumidor server-side.
+-- =============================================================================
+
+drop view if exists individuos_scoring;

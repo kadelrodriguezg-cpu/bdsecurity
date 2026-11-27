@@ -1,0 +1,47 @@
+# Configuración del proyecto Supabase local (usada por la Supabase CLI).
+# Este archivo lo lee el comando `supabase start` para levantar la base local
+# en Docker. Los valores por default alcanzan para desarrollo.
+# Docs: https://supabase.com/docs/guides/cli/config
+
+project_id = "dbsecurity-frutales"
+
+[api]
+enabled = true
+# BDSecurity usa un bloque exclusivo para convivir con Strata en el mismo PC.
+# No usar 54321:54323, reservados para Strata.
+port = 54600
+schemas = ["public", "storage"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54601
+# Versión mayor de Postgres. 15+ es necesario para security_invoker en vistas.
+major_version = 17
+
+[studio]
+enabled = true
+port = 54602
+
+[inbucket]
+enabled = true
+# Visor de correo local exclusivo de BDSecurity; Strata ocupa 54325/54326.
+port = 54603
+
+[auth]
+enabled = true
+# Registro público cerrado, igual que en producción (hallazgo A1-001 de la
+# auditoría integral, 22-10-2026). Las cuentas las crea un admin desde el panel
+# de Supabase; las pruebas usan auth.admin.createUser (API admin, service_role).
+enable_signup = false
+
+[storage]
+enabled = true
+# Límite de tamaño por archivo subido (fotos/videos de campo).
+file_size_limit = "50MiB"
+
+# No usado por el frontend; desactivado para evitar el puerto default 54327,
+# que cae en un rango excluido por WinNAT en esta máquina (ver memoria
+# supabase-winnat-port-exclusion).
+[analytics]
+enabled = false

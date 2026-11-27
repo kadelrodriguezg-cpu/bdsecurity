@@ -1,0 +1,330 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Color — identidad v2 «La planilla clara» (DESIGN.md). */
+    --bg: #f6f7fb; /* fondo */
+    --surface: #ffffff; /* superficie */
+    --surface-2: #f9fafb; /* superficie-2 */
+    --line: #e5e7eb; /* borde */
+    --line-soft: #f0f1f4; /* borde-fila */
+    --line-strong: #d1d5db; /* borde de controles secundarios y de campos */
+    --track: #eef0f4; /* pista de barras */
+    --neutral-l: #f3f4f6; /* neutro-lavado */
+
+    --ink: #111827; /* tinta: texto principal */
+    --ink-2: #374151; /* tinta-2: secundario */
+    --ink-3: #4b5563; /* tinta-3: terciario; piso de contraste sobre fondo */
+    --ink-4: #6b7280; /* tinta-4: metadato, solo sobre superficie blanca */
+
+    --brand: #4338ca; /* acento índigo */
+    --brand-d: #3730a3; /* acento-hover */
+    --brand-l: #eef2ff; /* acento-lavado: fondo de selección */
+    --brand-s: #e0e7ff; /* acento-suave: chip Borrador */
+    --brand-c: #a5b4fc; /* acento-claro: tramos secundarios en barras */
+    --brand-ink: #3730a3; /* texto sobre brand-l */
+
+    --ok: #047857;
+    --ok-l: #d1fae5;
+    --warn: #92400e; /* falta: solo para «aquí falta un dato» */
+    --warn-l: #fef3c7;
+    --warn-t: #fffbeb; /* falta-tenue */
+    --danger: #991b1b; /* revisar */
+    --danger-l: #fee2e2;
+
+    /* Espaciado — únicos valores válidos en el sistema nuevo */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 14px;
+    --space-5: 16px;
+    --space-6: 24px;
+
+    /* Radios y elevación */
+    --r: 8px; /* controles */
+    --r-l: 12px; /* tarjetas y superficies grandes */
+    /* Plano: las tarjetas no llevan sombra; solo los overlays se elevan. */
+    --shadow: none;
+    --shadow-hi: 0 8px 30px rgba(17, 24, 39, 0.12);
+
+    --tap: 44px; /* mínimo táctil */
+
+    /* Movimiento: feedback, cambios de contenido y overlays. */
+    --dur-feedback: 120ms;
+    --dur-transition: 180ms;
+    --dur-overlay: 260ms;
+    --dur-sheet: 320ms;
+    --dur-exit-safety: 380ms;
+    --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+    --ease-sheet: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+    /* Paleta de series de gráficos (clima, ranking por parámetro): sin significado semántico; ver lib/colores.ts. */
+    --chart-1: #4338ca;
+    --chart-2: #287c83;
+    --chart-3: #a16824;
+    --chart-4: #8760a6;
+    --chart-5: #477644;
+  }
+
+  body {
+    @apply bg-bg text-ink antialiased;
+  }
+
+  ::selection {
+    background-color: var(--brand-s);
+    color: var(--ink);
+  }
+}
+
+@keyframes overlay-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlay-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes overlay-enter {
+  from { opacity: 0; transform: var(--overlay-offset); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes overlay-exit {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: var(--overlay-offset); }
+}
+@keyframes sheet-enter {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes sheet-exit {
+  from { transform: var(--sheet-exit-transform, none); }
+  to { transform: translateY(100%); }
+}
+.motion-overlay { animation: overlay-fade-in var(--dur-overlay) var(--ease-enter) both; }
+.motion-dialog {
+  --overlay-offset: translateY(24px);
+  animation: sheet-enter var(--dur-sheet) var(--ease-sheet) both;
+  transition: transform var(--dur-sheet) var(--ease-sheet);
+}
+.motion-dialog[data-interactuado] { animation: none; }
+.motion-dialog[data-arrastrando] { transition: none; }
+.motion-overlay[data-cerrando] { animation: overlay-fade-out var(--dur-overlay) var(--ease-exit) both; }
+.motion-sheet[data-cerrando] .motion-dialog {
+  animation: sheet-exit var(--dur-sheet) var(--ease-sheet) both;
+  transition: none;
+}
+@media (min-width: 640px) {
+  .motion-dialog {
+    --overlay-offset: translateY(8px) scale(0.985);
+    animation: overlay-enter var(--dur-overlay) var(--ease-enter) both;
+  }
+  .motion-dialog-chat { --overlay-offset: translateX(32px); }
+  .motion-sheet[data-cerrando] .motion-dialog { animation: overlay-exit var(--dur-overlay) var(--ease-exit) both; }
+}
+
+.motion-press {
+  transition: transform var(--dur-feedback) var(--ease-standard), opacity var(--dur-feedback) var(--ease-standard);
+}
+.motion-press:active:not(:disabled) { transform: scale(0.98); }
+
+@keyframes content-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes selection-enter {
+  from { transform: scaleX(0.75); }
+  to { transform: scaleX(1); }
+}
+@keyframes skeleton-sweep {
+  from { transform: translateX(-100%); opacity: 0; }
+  15%, 85% { opacity: 0.65; }
+  to { transform: translateX(100%); opacity: 0; }
+}
+
+/* Sin fill forwards: no dejar contextos de apilamiento en contenido con sticky/fixed. */
+.motion-reveal { animation: content-enter var(--dur-transition) var(--ease-enter); }
+[role="alert"], [role="status"], [role="tabpanel"]:not([hidden]) {
+  animation: overlay-fade-in var(--dur-transition) var(--ease-enter);
+}
+nav :is(a, button), [role="tab"] {
+  transition: transform var(--dur-feedback) var(--ease-standard);
+}
+nav :is(a, button):active:not(:disabled), [role="tab"]:active { transform: translateY(1px); }
+nav [aria-current="page"], [role="tab"][aria-selected="true"] {
+  animation: overlay-fade-in var(--dur-transition) var(--ease-enter);
+}
+input:is([type="checkbox"], [type="radio"]):checked {
+  animation: selection-enter var(--dur-feedback) var(--ease-standard);
+}
+
+/* Solo tarjetas que ya son enlaces; ninguna tarjeta informativa finge ser clicable. */
+a > .motion-card { position: relative; transition: transform var(--dur-transition) var(--ease-standard); }
+a > .motion-card::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  pointer-events: none; box-shadow: var(--shadow-hi); opacity: 0;
+  transition: opacity var(--dur-transition) var(--ease-standard);
+}
+a:focus-visible > .motion-card::after { opacity: 1; }
+@media (hover: hover) and (pointer: fine) {
+  a:hover > .motion-card { transform: translateY(-2px); }
+  a:hover > .motion-card::after { opacity: 1; }
+}
+/* Seis primeras tarjetas, nunca tablas virtualizadas ni listas completas. */
+ul:has(> li > a > .motion-card) > li:nth-child(-n+6) {
+  animation: overlay-fade-in var(--dur-transition) var(--ease-enter) backwards;
+}
+ul:has(> li > a > .motion-card) > li:nth-child(2) { animation-delay: calc(var(--dur-feedback) / 6); }
+ul:has(> li > a > .motion-card) > li:nth-child(3) { animation-delay: calc(var(--dur-feedback) / 3); }
+ul:has(> li > a > .motion-card) > li:nth-child(4) { animation-delay: calc(var(--dur-feedback) / 2); }
+ul:has(> li > a > .motion-card) > li:nth-child(5) { animation-delay: calc(var(--dur-feedback) * 2 / 3); }
+ul:has(> li > a > .motion-card) > li:nth-child(6) { animation-delay: calc(var(--dur-feedback) * 5 / 6); }
+
+/* Dos barridos y reposo: el texto de carga sigue disponible sin movimiento continuo. */
+.animate-pulse { position: relative; overflow: hidden; animation: none; }
+.animate-pulse::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 65%, transparent), transparent);
+  animation: skeleton-sweep calc(var(--dur-overlay) * 4) var(--ease-standard) 2;
+}
+
+/* También cubre spinners y transiciones de consumidores antiguos. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* La impresión de etiquetas sigue aislada en su iframe. Estas reglas solo
+ * afectan la comparación EVECL, marcada con .evecl-print-root. */
+.evecl-barra-rayada {
+  background-color: var(--brand-s);
+  background-image: repeating-linear-gradient(
+    135deg,
+    var(--brand) 0,
+    var(--brand) 5px,
+    var(--brand-s) 5px,
+    var(--brand-s) 10px
+  );
+}
+
+body:has(.evecl-print-preview) {
+  background: #d8d8dc;
+}
+
+body:has(.evecl-print-preview) #root > div > header,
+body:has(.evecl-print-preview) #root > div > nav,
+body:has(.evecl-print-preview) [data-print-control] {
+  display: none;
+}
+
+body:has(.evecl-print-preview) #root > div {
+  padding-bottom: 0;
+}
+
+body:has(.evecl-print-preview) #root > div > main {
+  max-width: none;
+  padding: 0;
+}
+
+.evecl-print-preview {
+  width: min(210mm, calc(100vw - 32px));
+  min-height: 297mm;
+  margin: 72px auto 24px;
+  padding: 12mm;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 8px 32px rgb(0 0 0 / 20%);
+}
+
+.evecl-print-preview a {
+  display: none;
+}
+
+.evecl-print-preview [data-print-preview-toolbar] {
+  position: fixed;
+  z-index: 50;
+  top: 12px;
+  right: 16px;
+}
+
+.evecl-print-preview .evecl-print-card {
+  border: 1px solid #999;
+  box-shadow: none;
+}
+
+.evecl-print-preview .evecl-print-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.evecl-print-preview table,
+.evecl-print-preview th,
+.evecl-print-preview td {
+  border-color: #bbb;
+}
+
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  #root > div > header,
+  #root > div > nav,
+  [data-print-control],
+  [data-print-preview-toolbar] {
+    display: none !important;
+  }
+
+  #root > div {
+    padding-bottom: 0 !important;
+  }
+
+  #root > div > main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  .evecl-print-root a {
+    display: none !important;
+  }
+
+  .evecl-print-root,
+  .evecl-print-root * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .evecl-print-card,
+  .evecl-print-root section,
+  .evecl-print-root table,
+  .evecl-print-root tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .evecl-print-card {
+    border: 1px solid #999 !important;
+    box-shadow: none !important;
+  }
+
+  .evecl-print-root .evecl-print-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .evecl-print-preview {
+    width: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .evecl-print-root table,
+  .evecl-print-root th,
+  .evecl-print-root td {
+    border-color: #bbb !important;
+  }
+}

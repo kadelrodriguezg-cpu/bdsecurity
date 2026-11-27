@@ -1,0 +1,79 @@
+# Secretos y entorno — NUNCA se suben
+.env
+.env.*
+!.env.example
+*.key
+
+# Dependencias
+node_modules/
+jspm_packages/
+
+# Build de TypeScript / Vite
+dist/
+dev-dist/
+*.tsbuildinfo
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+.vite/
+
+# Supabase local (temporales de Docker/CLI)
+supabase/.branches/
+supabase/.temp/
+
+# Logs y basura del SO
+*.log
+npm-debug.log*
+yarn-debug.log*
+.DS_Store
+Thumbs.db
+
+# Cache de package managers
+.npm
+.eslintcache
+.pnpm-store
+bds-backup-*.asc
+
+# Respaldos manuales de producción: pueden contener datos y linaje sensibles.
+backups/
+
+# Capturas manuales de la aplicación: son evidencia local y pueden incluir
+# identificadores operativos; no son assets de producto versionados.
+capturas/
+
+# Adjuntos locales creados por la sesión remota de Codex; pueden contener
+# capturas operativas y no forman parte del producto.
+.codex-remote-attachments/
+
+# Linaje genético en texto plano — nunca en el repo (defensa en profundidad,
+# ver CLAUDE.md sección 1: el linaje es el activo sensible del proyecto).
+# Vive fuera del árbol del repo si hace falta un backup manual.
+plantas_recuperadas*.sql
+plantas_*_pendiente_confirmar.sql
+.claude/settings.local.json
+
+# Capturas de presentación: mostraban códigos de cruce reales y el nombre del
+# administrador. Se dejaron de versionar el 2026-10-04 (siguen en el historial).
+material-presentacion/
+
+# Artefactos locales que pueden contener credenciales, datos o linaje:
+# configuracion de Vercel en la raiz (frontend/.vercel ya lo cubre
+# frontend/.gitignore), parches de trabajo, volcados, certificados y exports.
+.vercel/
+*.patch
+*.dump
+*.pem
+exports/
+# Datos de la migracion desde Notion y sus salidas (linaje real).
+migration/*datos*
+migration/preview-*.json
+.scratch/
+# Binario del motor de impeccable (se descarga/instala con npx impeccable)
+.claude/skills/impeccable/scripts/bin/
+# Configuración y caché locales de impeccable (no se versionan)
+.impeccable/config.json
+.impeccable/hook.cache.json
+# Subagentes instalados por la skill impeccable: no se versionan (decisión de Kadel, 22-10-2026)
+.claude/agents/
+
+# Copia pública de portafolio (la genera scripts/portafolio/exportar.sh; es otro repo)
+.portafolio/
